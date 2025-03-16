@@ -9,7 +9,16 @@
 <body>
     <div class="container mt-5">
         <h1 class="mb-4">{% if contact %}Edit Contact{% else %}Add New Contact{% endif %}</h1>
-        <form method="POST">
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <form method="POST" action="{{ url_for('add_contact') }}">
             <div class="mb-3">
                 <label for="name" class="form-label">Name</label>
                 <input type="text" class="form-control" id="name" name="name" value="{{ contact[1] if contact else '' }}" required>

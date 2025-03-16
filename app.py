@@ -24,24 +24,44 @@ def index():
 def add_contact():
     if request.method == 'POST':
         try:
-            name = request.form['name'].strip()
-            phone = request.form['phone'].strip()
-            email = request.form['email'].strip()
+            # Get form data
+            name = request.form.get('name', '').strip()
+            phone = request.form.get('phone', '').strip()
+            email = request.form.get('email', '').strip()
             
+            # Validate inputs
             if not name or not phone:
                 flash('Name and phone number are required!', 'danger')
                 return render_template('add_contact.html')
             
-            if not phone.replace('+', '').replace('-', '').replace(' ', '').replace('(', '').replace(')', '').isdigit():
+            # Validate phone number format
+            phone_clean = phone.replace('+', '').replace('-', '').replace(' ', '').replace('(', '').replace(')', '')
+            if not phone_clean.isdigit():
                 flash('Invalid phone number format!', 'danger')
                 return render_template('add_contact.html')
             
-            phonebook.insert_contact(name, phone, email)
-            flash('Contact added successfully!', 'success')
-            return redirect(url_for('index'))
+            # Insert the contact
+            try:
+                phonebook.insert_contact(name, phone, email)
+                flash('Contact added successfully!', 'success')
+                
+                # Verify the contact was added
+                contacts = phonebook.display_contacts()
+                if not any(c[2] == phone for c in contacts):
+                    flash('Contact was added but could not be verified. Please check the list.', 'warning')
+                
+                return redirect(url_for('index'))
+            except ValueError as e:
+                flash(str(e), 'danger')
+                return render_template('add_contact.html')
+            except Exception as e:
+                flash(f'Database error: {str(e)}', 'danger')
+                return render_template('add_contact.html')
+                
         except Exception as e:
-            flash(f'Error adding contact: {str(e)}', 'danger')
+            flash(f'Error processing form: {str(e)}', 'danger')
             return render_template('add_contact.html')
+            
     return render_template('add_contact.html')
 
 @app.route('/delete/<phone>')

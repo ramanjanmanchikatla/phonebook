@@ -4,30 +4,68 @@ from functools import lru_cache
 DB_PATH = 'database/contacts.db'
 
 def connect_db():
-    return sqlite3.connect(DB_PATH)
+    """
+    Create a database connection with proper error handling.
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row  # Enable row name access
+        return conn
+    except sqlite3.Error as e:
+        raise Exception(f"Database connection error: {str(e)}")
 
 def create_table():
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute(
-        "CREATE TABLE IF NOT EXISTS contacts ("
-        "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-        "name TEXT NOT NULL, "
-        "phone TEXT NOT NULL UNIQUE, "
-        "email TEXT)"
-    )
-    conn.commit()
-    conn.close()
-
-def insert_contact(name, phone, email):
+    """
+    Create the contacts table if it doesn't exist.
+    """
     conn = connect_db()
     cursor = conn.cursor()
     try:
-        cursor.execute('INSERT INTO contacts (name, phone, email) VALUES (?, ?, ?)', (name, phone, email))
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS contacts ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+            "name TEXT NOT NULL, "
+            "phone TEXT NOT NULL UNIQUE, "
+            "email TEXT)"
+        )
         conn.commit()
+    except sqlite3.Error as e:
+        conn.rollback()
+        raise Exception(f"Error creating table: {str(e)}")
+    finally:
+        conn.close()
+
+def insert_contact(name, phone, email):
+    """
+    Insert a new contact into the database.
+    Returns True if successful, False if phone number already exists.
+    Raises an exception for other errors.
+    """
+    conn = connect_db()
+    cursor = conn.cursor()
+    try:
+        # Validate inputs
+        if not name or not phone:
+            raise ValueError("Name and phone number are required")
+            
+        # Clean up inputs
+        name = name.strip()
+        phone = phone.strip()
+        email = email.strip() if email else None
+        
+        # Insert the contact
+        cursor.execute('INSERT INTO contacts (name, phone, email) VALUES (?, ?, ?)', 
+                      (name, phone, email))
+        conn.commit()
+        return True
     except sqlite3.IntegrityError:
-        print("Phone number already exists!")
-    conn.close()
+        conn.rollback()
+        raise ValueError("Phone number already exists!")
+    except Exception as e:
+        conn.rollback()
+        raise Exception(f"Error adding contact: {str(e)}")
+    finally:
+        conn.close()
 
 def delete_contact(phone):
     conn = connect_db()
@@ -49,12 +87,20 @@ def update_contact(old_phone, new_name=None, new_phone=None, new_email=None):
     conn.close()
 
 def display_contacts():
+    """
+    Display all contacts from the database.
+    Returns a list of tuples containing contact information.
+    """
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM contacts')
-    rows = cursor.fetchall()
-    conn.close()
-    return rows
+    try:
+        cursor.execute('SELECT * FROM contacts ORDER BY name')
+        rows = cursor.fetchall()
+        return rows
+    except Exception as e:
+        raise Exception(f"Error fetching contacts: {str(e)}")
+    finally:
+        conn.close()
 
 def edit_distance(s1, s2):
     """
