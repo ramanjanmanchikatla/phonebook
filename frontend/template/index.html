@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>All Contacts</h2>
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Phone</th>
+        <th>Email</th>
+        <th>Actions</th>
+    </tr>
+    {% for contact in contacts %}
+    <tr>
+        <td>{{ contact[0] }}</td>
+        <td>{{ contact[1] }}</td>
+        <td>{{ contact[2] }}</td>
+        <td>{{ contact[3] }}</td>
+        <td>
+            <a href="{{ url_for('update_contact', phone=contact[2]) }}">Edit</a> |
+            <a href="{{ url_for('delete_contact', phone=contact[2]) }}">Delete</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

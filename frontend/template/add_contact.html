@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>{% if contact %}Update Contact{% else %}Add New Contact{% endif %}</h2>
+<form method="POST">
+    <label>Name:</label><br>
+    <input type="text" name="name" value="{{ contact[1] if contact else '' }}" required><br><br>
+
+    <label>Phone:</label><br>
+    <input type="text" name="phone" value="{{ contact[2] if contact else '' }}" required><br><br>
+
+    <label>Email:</label><br>
+    <input type="email" name="email" value="{{ contact[3] if contact else '' }}"><br><br>
+
+    <input type="submit" value="{% if contact %}Update{% else %}Add{% endif %}">
+</form>
+{% endblock %}
