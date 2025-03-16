@@ -28,6 +28,7 @@ def add_contact():
             name = request.form.get('name', '').strip()
             phone = request.form.get('phone', '').strip()
             email = request.form.get('email', '').strip()
+            flash(f"Searching for Name: {name}, Phone: {phone}, Email: {email}")
             
             # Validate inputs
             if not name or not phone:
